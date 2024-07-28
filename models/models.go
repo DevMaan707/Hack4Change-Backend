@@ -3,6 +3,8 @@ package models
 import (
 	"time"
 
+	_ "github.com/lib/pq"
+
 	"github.com/dgrijalva/jwt-go"
 )
 
@@ -71,4 +73,16 @@ type Folder struct {
 	FolderName string    `json:"folder_name" validate:"required,min=1,max=255"`
 	CreatedAt  time.Time `json:"created_at"`
 	UpdatedAt  time.Time `json:"updated_at"`
+}
+
+type CreateAccountDetails struct {
+	ID        string    `json:"id"`
+	Username  string    `json:"username" validate:"required,min=3,max=32"`
+	Email     string    `json:"email" validate:"required,email"`
+	Phone     string    `json:"phone" validate:"omitempty,e164"`
+	FirstName string    `json:"first_name" validate:"omitempty,min=1,max=32"`
+	LastName  string    `json:"last_name" validate:"omitempty,min=1,max=32"`
+	Password  string    `json:"password" validate:"required,min=8,max=128"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
 }
