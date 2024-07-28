@@ -32,6 +32,7 @@ func (pg *PostQreSQLCon) CreateTables() error {
 		);`,
 		`CREATE TABLE IF NOT EXISTS projects (
 			id UUID PRIMARY KEY,
+			userid UUID REFERENCES users(id),
 			project_id VARCHAR(50) NOT NULL,
 			owner_id UUID REFERENCES users(id) ON DELETE CASCADE,
 			project_name VARCHAR(50) NOT NULL,

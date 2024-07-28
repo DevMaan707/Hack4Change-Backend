@@ -1,6 +1,8 @@
 package routes
 
 import (
+	"Hack4Change/database"
+	"Hack4Change/handlers"
 	"fmt"
 	"net/http"
 
@@ -8,7 +10,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func InitializeRoutes(router *gin.Engine, dynamoClient *dynamodb.Client) {
+func InitializeRoutes(router *gin.Engine, dynamoClient *dynamodb.Client, dbConn *database.PostQreSQLCon) {
 	// Test route
 	router.GET("/test", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"message": "success"})
@@ -38,7 +40,7 @@ func InitializeRoutes(router *gin.Engine, dynamoClient *dynamodb.Client) {
 
 	// Auth APIs
 	router.POST("/auth/register", func(c *gin.Context) {
-		// Add your handler logic here
+		handlers.Register(c, dbConn)
 	})
 
 	router.GET("/auth/login", func(c *gin.Context) {

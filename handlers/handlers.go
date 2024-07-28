@@ -14,11 +14,8 @@ import (
 func Login(c *gin.Context) {
 
 }
-func Register(c *gin.Context) {
-	dbConn, err := database.ConnectPostgreSQL()
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-	}
+func Register(c *gin.Context, dbConn *database.PostQreSQLCon) {
+
 	var payload models.CreateAccountReq
 	if err := c.ShouldBindJSON(&payload); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
