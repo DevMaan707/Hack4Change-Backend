@@ -99,3 +99,23 @@ func (pg *PostQreSQLCon) InsertFolder(folder models.Folder) error {
 	_, err := pg.dbCon.Exec(query, folder.ID, folder.ProjectID, folder.FolderName)
 	return err
 }
+
+func (con *PostQreSQLCon) FetchHashedPassword(email string) (string, error) {
+	var hashedPassword string
+	query := `SELECT password FROM users WHERE email = $1`
+	err := con.dbCon.QueryRow(query, email).Scan(&hashedPassword)
+	if err != nil {
+		return "", err
+	}
+	return hashedPassword, nil
+}
+
+func (con *PostQreSQLCon) FetchUserIdByEmail(email string) (string, error) {
+	var userID string
+	query := `SELECT id FROM users WHERE email = $1;`
+	err := con.dbCon.QueryRow(query, email).Scan(&userID)
+	if err != nil {
+		return "", err
+	}
+	return userID, nil
+}

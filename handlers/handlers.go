@@ -11,8 +11,32 @@ import (
 	"github.com/google/uuid"
 )
 
-func Login(c *gin.Context) {
-
+func Login(c *gin.Context, db *database.PostQreSQLCon) {
+	var login models.Login
+	if err := c.BindJSON(&login); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
+		return
+	}
+	hashedPassword, err := db.FetchHashedPassword(login.Email)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	check := helpers.CheckPasswordHash(hashedPassword, login.Password)
+	if !check {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid password"})
+		return
+	}
+	userID, err := db.FetchUserIdByEmail(login.Email)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	}
+	token, err := helpers.GenerateJWT(userID)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"token": token})
 }
 func Register(c *gin.Context, dbConn *database.PostQreSQLCon) {
 

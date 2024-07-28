@@ -43,6 +43,6 @@ func InitializeRoutes(router *gin.Engine, dbConn *database.PostQreSQLCon) {
 	})
 
 	router.GET("/auth/login", func(c *gin.Context) {
-		// Add your handler logic here
+		handlers.Login(c, dbConn)
 	})
 }

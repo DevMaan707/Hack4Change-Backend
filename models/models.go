@@ -23,6 +23,11 @@ type CreateAccountReq struct {
 	ConfirmPassword string `json:"confirm_password" validate:"required,min=8,max=128,eqfield=Password"`
 }
 
+type Login struct {
+	Email    string `json:"email"`
+	Password string `json:"password"`
+}
+
 type Socials struct {
 	GitHub      string `json:"github" validate:"omitempty,url"`
 	LinkedIn    string `json:"linkedin" validate:"omitempty,url"`
