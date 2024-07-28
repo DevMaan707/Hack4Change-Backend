@@ -183,3 +183,52 @@ func SaveFileContent(c *gin.Context, db *database.PostQreSQLCon) {
 	}
 	c.JSON(http.StatusOK, gin.H{"message": "File content saved successfully"})
 }
+
+func FetchFilesByProjectId(c *gin.Context, db *database.PostQreSQLCon) {
+	projectID := c.Param("id")
+
+	fileDetails, err := db.FetchFilesByProjectId(projectID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"data": fileDetails})
+
+}
+func FetchFoldersByProjectId(c *gin.Context, db *database.PostQreSQLCon) {
+	projectID := c.Param("id")
+
+	folderDetails, err := db.FetchFoldersByProjectId(projectID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"data": folderDetails})
+
+}
+func FetchProjectsByUserId(c *gin.Context, db *database.PostQreSQLCon) {
+	userId, exists := c.Get("userId")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized access"})
+		return
+	}
+	projectDetails, err := db.FetchProjectsByUserId(userId.(string))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"data": projectDetails})
+}
+func FetchUserData(c *gin.Context, db *database.PostQreSQLCon) {
+	userId, exists := c.Get("userId")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized access"})
+		return
+	}
+	userDetails, err := db.FetchProjectsByUserId(userId.(string))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"data": userDetails})
+}

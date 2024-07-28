@@ -153,9 +153,9 @@ func (con *PostQreSQLCon) FetchFoldersByProjectId(projectId string) ([]models.Fo
 	}
 	return folders, nil
 }
-func (con *PostQreSQLCon) FetchFilesByProjectId(userId string) ([]models.File, error) {
+func (con *PostQreSQLCon) FetchFilesByProjectId(projectId string) ([]models.File, error) {
 	query := `SELECT id, project_id, file_name, file_content, created_at, updated_at FROM files WHERE project_id = $1`
-	rows, err := con.dbCon.Query(query, userId)
+	rows, err := con.dbCon.Query(query, projectId)
 	if err != nil {
 		return nil, err
 	}
@@ -173,10 +173,19 @@ func (con *PostQreSQLCon) FetchFilesByProjectId(userId string) ([]models.File, e
 
 func (con *PostQreSQLCon) SaveContent(content string) error {
 	var req models.SaveFileRequest
-	query := `UPDATE files SET file_content = $1, updated_at = NOW() WHERE id = $2 AND project_id = $3`
+	query := `UPDATE files SET file_content = $1, updated_at = NOW() WHERE id = $2 AND project_id = $3;`
 	if _, err := con.dbCon.Exec(query, req.Content, req.FileID, req.ProjectID); err != nil {
 
 		return err
 	}
 	return nil
+}
+func (con *PostQreSQLCon) FetchUserDetails(userId string) (*models.UserDetails, error) {
+	query := `SELECT id, username, email,phone,first_name,last_name, created_at, updated_at FROM users WHERE id=$1;`
+	var user models.UserDetails
+	err := con.dbCon.QueryRow(query, userId).Scan(&user.ID, &user.Username, &user.Email, &user.Phone, &user.FirstName, &user.LastName, &user.CreatedAt, &user.UpdatedAt)
+	if err != nil {
+		return nil, err
+	}
+	return &user, nil
 }
