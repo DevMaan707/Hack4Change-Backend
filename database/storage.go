@@ -32,9 +32,8 @@ func (pg *PostQreSQLCon) CreateTables() error {
 		);`,
 		`CREATE TABLE IF NOT EXISTS projects (
 			
-			userid UUID REFERENCES users(id),
+			user_id UUID REFERENCES users(id),
 			project_id VARCHAR(50) NOT NULL,
-			owner_id UUID REFERENCES users(id) ON DELETE CASCADE,
 			project_name VARCHAR(50) NOT NULL,
 			project_description VARCHAR(255),
 			created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -80,7 +79,7 @@ func (pg *PostQreSQLCon) InsertSocialAccounts(userID string, socials models.Soci
 }
 
 func (pg *PostQreSQLCon) InsertProject(project models.ProjectDetails) error {
-	query := `INSERT INTO projects (id, project_id, owner_id, project_name, project_description, created_at, updated_at)
+	query := `INSERT INTO projects ( project_id, user_id, project_name, project_description, created_at, updated_at)
               VALUES ($1, $2, $3, $4, NOW(), NOW())`
 	_, err := pg.dbCon.Exec(query, project.ProjectID, project.OwnerID, project.ProjectName, project.ProjectDescription)
 	return err
@@ -118,4 +117,56 @@ func (con *PostQreSQLCon) FetchUserIdByEmail(email string) (string, error) {
 		return "", err
 	}
 	return userID, nil
+}
+
+func (con *PostQreSQLCon) FetchProjectsByUserId(userId string) ([]models.ProjectDetails, error) {
+	query := `SELECT project_id, user_id,project_name, project_description,created_at,updated_at FROM projects WHERE user_id =$1;`
+	rows, err := con.dbCon.Query(query, userId)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var projects []models.ProjectDetails
+	for rows.Next() {
+		var project models.ProjectDetails
+		if err := rows.Scan(&project.ProjectID, &project.OwnerID, &project.ProjectName, &project.ProjectDescription, &project.CreatedAt, &project.UpdatedAt); err != nil {
+			return nil, err
+		}
+		projects = append(projects, project)
+	}
+	return projects, nil
+}
+func (con *PostQreSQLCon) FetchFoldersByProjectId(projectId string) ([]models.FolderDetails, error) {
+	query := `SELECT id,project_id,folder_name,created_at,updated_at FROM folders WHERE project_id =$1;`
+	rows, err := con.dbCon.Query(query, projectId)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var folders []models.FolderDetails
+	for rows.Next() {
+		var folder models.FolderDetails
+		if err := rows.Scan(&folder.ID, &folder.ProjectID, &folder.FolderName, &folder.CreatedAt, &folder.UpdatedAt); err != nil {
+			return nil, err
+		}
+		folders = append(folders, folder)
+	}
+	return folders, nil
+}
+func (con *PostQreSQLCon) FetchFilesByProjectId(userId string) ([]models.File, error) {
+	query := `SELECT id, project_id, file_name, file_content, created_at, updated_at FROM files WHERE project_id = $1`
+	rows, err := con.dbCon.Query(query, userId)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var files []models.File
+	for rows.Next() {
+		var file models.File
+		if err := rows.Scan(&file.ID, &file.ProjectID, &file.FileName, &file.FileContent, &file.CreatedAt, &file.UpdatedAt); err != nil {
+			return nil, err
+		}
+		files = append(files, file)
+	}
+	return files, nil
 }

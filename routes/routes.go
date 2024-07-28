@@ -10,7 +10,7 @@ import (
 )
 
 func InitializeRoutes(router *gin.Engine, dbConn *database.PostQreSQLCon) {
-	// Test route
+
 	router.GET("/test", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"message": "success"})
 		fmt.Println("Success")
@@ -22,19 +22,15 @@ func InitializeRoutes(router *gin.Engine, dbConn *database.PostQreSQLCon) {
 	})
 
 	router.POST("/space/:id/create-folder", func(c *gin.Context) {
-		// Add your handler logic here
+		handlers.CreateFolder(c, dbConn)
 	})
 
 	router.POST("/space/:id/create-file", func(c *gin.Context) {
-		// Add your handler logic here
-	})
-
-	router.GET("/space/activate-space", func(c *gin.Context) {
-		// Add your handler logic here
+		handlers.CreateFile(c, dbConn)
 	})
 
 	router.POST("/space/create-space", func(c *gin.Context) {
-		// Add your handler logic here
+		handlers.CreateProject(c, dbConn)
 	})
 
 	// Auth APIs
