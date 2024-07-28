@@ -6,11 +6,10 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/gin-gonic/gin"
 )
 
-func InitializeRoutes(router *gin.Engine, dynamoClient *dynamodb.Client, dbConn *database.PostQreSQLCon) {
+func InitializeRoutes(router *gin.Engine, dbConn *database.PostQreSQLCon) {
 	// Test route
 	router.GET("/test", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"message": "success"})

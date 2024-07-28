@@ -1,7 +1,9 @@
 package main
 
+/*
+add /user/:id/update-profile
+*/
 import (
-	"Hack4Change/database"
 	db "Hack4Change/database"
 	routes "Hack4Change/routes"
 	"log/slog"
@@ -10,14 +12,14 @@ import (
 )
 
 func main() {
-	dynamoClient := db.ConnectDynamoDB()
-	dbConn, err := database.ConnectPostgreSQL()
+
+	dbConn, err := db.ConnectPostgreSQL()
 	if err != nil {
 		slog.Error("Error with postgresql", "Error", err.Error())
 	}
 	router := gin.Default()
 
-	routes.InitializeRoutes(router, dynamoClient, dbConn)
+	routes.InitializeRoutes(router, dbConn)
 
 	router.Run(":8080")
 }

@@ -31,7 +31,7 @@ func (pg *PostQreSQLCon) CreateTables() error {
 			PRIMARY KEY (user_id)
 		);`,
 		`CREATE TABLE IF NOT EXISTS projects (
-			id UUID PRIMARY KEY,
+			
 			userid UUID REFERENCES users(id),
 			project_id VARCHAR(50) NOT NULL,
 			owner_id UUID REFERENCES users(id) ON DELETE CASCADE,
@@ -81,8 +81,8 @@ func (pg *PostQreSQLCon) InsertSocialAccounts(userID string, socials models.Soci
 
 func (pg *PostQreSQLCon) InsertProject(project models.ProjectDetails) error {
 	query := `INSERT INTO projects (id, project_id, owner_id, project_name, project_description, created_at, updated_at)
-              VALUES ($1, $2, $3, $4, $5, NOW(), NOW())`
-	_, err := pg.dbCon.Exec(query, project.ID, project.ProjectID, project.OwnerID, project.ProjectName, project.ProjectDescription)
+              VALUES ($1, $2, $3, $4, NOW(), NOW())`
+	_, err := pg.dbCon.Exec(query, project.ProjectID, project.OwnerID, project.ProjectName, project.ProjectDescription)
 	return err
 }
 

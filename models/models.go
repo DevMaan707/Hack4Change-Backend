@@ -49,7 +49,6 @@ type CreateProjectReq struct {
 }
 
 type ProjectDetails struct {
-	ID                 string    `json:"id"`
 	ProjectID          string    `json:"project_id"`
 	OwnerID            string    `json:"owner_id"`
 	ProjectName        string    `json:"project_name"`
@@ -59,20 +58,23 @@ type ProjectDetails struct {
 }
 
 type File struct {
-	ID          string    `json:"id"`
-	ProjectID   string    `json:"project_id"`
-	FileName    string    `json:"file_name" validate:"required,min=1,max=255"`
-	FileContent string    `json:"file_content" validate:"required"`
-	CreatedAt   time.Time `json:"created_at"`
-	UpdatedAt   time.Time `json:"updated_at"`
+	ID             string    `json:"id"`
+	ProjectID      string    `json:"project_id"`
+	ParentFolderId string    `json:"parent_folder_id"`
+	FileName       string    `json:"file_name" validate:"required,min=1,max=255"`
+	FileContent    string    `json:"file_content" validate:"required"`
+	CreatedAt      time.Time `json:"created_at"`
+	UpdatedAt      time.Time `json:"updated_at"`
 }
 
 type Folder struct {
-	ID         string    `json:"id"`
-	ProjectID  string    `json:"project_id"`
-	FolderName string    `json:"folder_name" validate:"required,min=1,max=255"`
-	CreatedAt  time.Time `json:"created_at"`
-	UpdatedAt  time.Time `json:"updated_at"`
+	ID             string `json:"id"`
+	ProjectID      string `json:"project_id"`
+	FolderName     string `json:"folder_name" validate:"required,min=1,max=255"`
+	ParentFolderId string `json:"parent_folder_id"`
+
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
 }
 
 type CreateAccountDetails struct {
@@ -85,4 +87,17 @@ type CreateAccountDetails struct {
 	Password  string    `json:"password" validate:"required,min=8,max=128"`
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
+}
+
+type CreateFileReq struct {
+	ProjectID      string `json:"project_id" validate:"required"`
+	FileName       string `json:"file_name" validate:"required,min=1,max=255"`
+	FileContent    string `json:"file_content" validate:"required"`
+	ParentFolderId string `json:"parent_folder_id"`
+}
+
+type CreateFolderReq struct {
+	ProjectID      string `json:"project_id" validate:"required"`
+	FolderName     string `json:"folder_name" validate:"required,min=1,max=255"`
+	ParentFolderId string `json:"parent_folder_id"`
 }

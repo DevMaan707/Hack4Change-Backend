@@ -59,3 +59,89 @@ func Register(c *gin.Context, dbConn *database.PostQreSQLCon) {
 
 	c.JSON(http.StatusOK, gin.H{"token": token})
 }
+
+func CreateProject(c *gin.Context, dbCon *database.PostQreSQLCon) {
+	var payload models.CreateProjectReq
+	if err := c.ShouldBindJSON(&payload); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	userId, exist := c.Get("userID")
+	if !exist {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+
+	projectID := uuid.New().String()
+
+	project := models.ProjectDetails{
+		ProjectID:          projectID,
+		ProjectName:        payload.ProjectName,
+		ProjectDescription: payload.ProjectDescription,
+		OwnerID:            userId.(string),
+		CreatedAt:          time.Now(),
+		UpdatedAt:          time.Now(),
+	}
+	err := dbCon.InsertProject(project)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"message": "success"})
+}
+
+func CreateFile(c *gin.Context, dbCon *database.PostQreSQLCon) {
+	var payload models.CreateFileReq
+	if err := c.ShouldBindJSON(&payload); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	_, exist := c.Get("userID")
+	if !exist {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+	}
+	fileID := uuid.New().String()
+	file := models.File{
+		ProjectID:      payload.ProjectID,
+		FileName:       payload.FileName,
+		ID:             fileID,
+		ParentFolderId: payload.ParentFolderId,
+	}
+	err := dbCon.InsertFile(file)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"message": "success"})
+}
+func CreateFolder(c *gin.Context, dbCon *database.PostQreSQLCon) {
+	var payload models.CreateFolderReq
+	if err := c.ShouldBindJSON(&payload); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	_, exist := c.Get("userID")
+	if !exist {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+
+	folderID := uuid.New().String()
+
+	folder := models.Folder{
+		ProjectID:      payload.ProjectID,
+		ParentFolderId: payload.ParentFolderId,
+		ID:             folderID,
+		FolderName:     payload.FolderName,
+		CreatedAt:      time.Now(),
+		UpdatedAt:      time.Now(),
+	}
+
+	err := dbCon.InsertFolder(folder)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "success"})
+}
