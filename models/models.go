@@ -3,6 +3,7 @@ package models
 import (
 	"time"
 
+	"github.com/google/uuid"
 	_ "github.com/lib/pq"
 
 	"github.com/dgrijalva/jwt-go"
@@ -114,4 +115,9 @@ type FolderDetails struct {
 	ParentFolderId string    `json:"parent_folder_id"`
 	CreatedAt      time.Time `json:"created_at"`
 	UpdatedAt      time.Time `json:"updated_at"`
+}
+type SaveFileRequest struct {
+	ProjectID uuid.UUID `json:"projectId"`
+	FileID    uuid.UUID `json:"fileId"`
+	Content   string    `json:"content"`
 }

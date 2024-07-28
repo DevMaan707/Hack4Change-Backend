@@ -170,3 +170,13 @@ func (con *PostQreSQLCon) FetchFilesByProjectId(userId string) ([]models.File, e
 	}
 	return files, nil
 }
+
+func (con *PostQreSQLCon) SaveContent(content string) error {
+	var req models.SaveFileRequest
+	query := `UPDATE files SET file_content = $1, updated_at = NOW() WHERE id = $2 AND project_id = $3`
+	if _, err := con.dbCon.Exec(query, req.Content, req.FileID, req.ProjectID); err != nil {
+
+		return err
+	}
+	return nil
+}

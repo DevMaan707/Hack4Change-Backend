@@ -169,3 +169,17 @@ func CreateFolder(c *gin.Context, dbCon *database.PostQreSQLCon) {
 
 	c.JSON(http.StatusOK, gin.H{"message": "success"})
 }
+
+func SaveFileContent(c *gin.Context, db *database.PostQreSQLCon) {
+	var req models.SaveFileRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	if err := db.SaveContent(req.Content); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"message": "File content saved successfully"})
+}
