@@ -234,3 +234,6 @@ func FetchUserData(c *gin.Context, db *database.PostQreSQLCon) {
 	}
 	c.JSON(http.StatusOK, gin.H{"data": userDetails})
 }
+func UserProfile(c * gin.Context, db *database.PostQreSQLCon){
+	
+}
