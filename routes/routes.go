@@ -50,4 +50,30 @@ func InitializeRoutes(router *gin.Engine, dbConn *database.PostQreSQLCon) {
 			handlers.CreateProject(c, dbConn)
 		})
 	}
+	userGroup := router.Group("/user")
+	{
+		userGroup.GET("/profile", func(c *gin.Context) {
+			handlers.UserProfile(c, dbConn)
+		})
+		userGroup.GET("/academy", func(c *gin.Context) {
+			handlers.Academy(c, dbConn)
+		})
+		academyGroup := userGroup.Group("/academy")
+		{
+			academyGroup.GET("/dashboard",func(c *gin.Context){
+				handlers.DashBoard(c,dbConn)
+			})
+			academyGroup.GET("/:id/status",func(c *gin.Context){
+				handlers.Status(c, dbConn)
+			})
+			academyGroup.GET("/:id/status/:qid",func(c *gin.Context){
+				handlers.QDetails(c,dbConn)
+			})
+			academyGroup.POST("/:id/status/:qid/submit",func(c *gin.Context){
+				handlers.SubmitSol(c,dbConn)
+				
+			})
+		}
+		
+	}	
 }
