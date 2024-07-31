@@ -3,6 +3,10 @@ package database
 import (
 	"Hack4Change/models"
 	"database/sql"
+	"encoding/json"
+
+	"github.com/google/uuid"
+	"github.com/lib/pq"
 )
 
 type PostQreSQLCon struct {
@@ -12,16 +16,19 @@ type PostQreSQLCon struct {
 func (pg *PostQreSQLCon) CreateTables() error {
 	queries := []string{
 		`CREATE TABLE IF NOT EXISTS users (
-			id UUID PRIMARY KEY,
-			username VARCHAR(32) NOT NULL UNIQUE,
-			email VARCHAR(255) NOT NULL UNIQUE,
-			phone VARCHAR(20),
-			first_name VARCHAR(32),
-			last_name VARCHAR(32),
-			password_hash TEXT NOT NULL,
-			created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-			updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-		);`,
+	id UUID PRIMARY KEY,
+	username VARCHAR(32) NOT NULL UNIQUE,
+	email VARCHAR(255) NOT NULL UNIQUE,
+	phone VARCHAR(20),
+	first_name VARCHAR(32),
+	last_name VARCHAR(32),
+	password_hash TEXT NOT NULL,
+	social_accounts JSONB,
+	badges JSONB,
+	created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+	updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+`,
 		`CREATE TABLE IF NOT EXISTS socials (
 			user_id UUID REFERENCES users(id) ON DELETE CASCADE,
 			github VARCHAR(255),
@@ -54,6 +61,13 @@ func (pg *PostQreSQLCon) CreateTables() error {
 			created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 			updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 		);`,
+		`CREATE TABLE IF NOT EXISTS skills (
+	id UUID PRIMARY KEY,
+	topic VARCHAR(255) NOT NULL,
+	intro TEXT NOT NULL,
+	data JSONB NOT NULL,
+	user_ids TEXT[] NOT NULL
+);`,
 	}
 
 	for _, query := range queries {
@@ -181,11 +195,90 @@ func (con *PostQreSQLCon) SaveContent(content string) error {
 	return nil
 }
 func (con *PostQreSQLCon) FetchUserDetails(userId string) (*models.UserDetails, error) {
-	query := `SELECT id, username, email,phone,first_name,last_name, created_at, updated_at FROM users WHERE id=$1;`
+	query := `SELECT id, username, email, phone, first_name, last_name, social_accounts, badges, created_at, updated_at FROM users WHERE id=$1;`
 	var user models.UserDetails
-	err := con.dbCon.QueryRow(query, userId).Scan(&user.ID, &user.Username, &user.Email, &user.Phone, &user.FirstName, &user.LastName, &user.CreatedAt, &user.UpdatedAt)
+	var socialAccountsJSON, badgesJSON []byte
+
+	err := con.dbCon.QueryRow(query, userId).Scan(
+		&user.ID,
+		&user.Username,
+		&user.Email,
+		&user.Phone,
+		&user.FirstName,
+		&user.LastName,
+		&socialAccountsJSON,
+		&badgesJSON,
+		&user.CreatedAt,
+		&user.UpdatedAt,
+	)
 	if err != nil {
 		return nil, err
 	}
+
+	if err := json.Unmarshal(socialAccountsJSON, &user.SocialAccounts); err != nil {
+		return nil, err
+	}
+	if err := json.Unmarshal(badgesJSON, &user.Badges); err != nil {
+		return nil, err
+	}
+
 	return &user, nil
+}
+
+func (con *PostQreSQLCon) AddSkill(skill *models.Skill) error {
+	query := `INSERT INTO skills (id, topic, intro, data, user_ids) VALUES ($1, $2, $3, $4, $5);`
+
+	id := uuid.New().String()
+	dataJSON, err := json.Marshal(skill.Data)
+	if err != nil {
+		return err
+	}
+
+	_, err = con.dbCon.Exec(query, id, skill.Topic, skill.Intro, dataJSON, pq.Array(skill.UserIds))
+	if err != nil {
+		return err
+	}
+	return nil
+}
+func (con *PostQreSQLCon) FetchSkillIdAndNameByUserID(userID string) ([]models.SkillDetails, error) {
+	query := `SELECT id, topic FROM skills WHERE $1 = ANY(user_ids);`
+	rows, err := con.dbCon.Query(query, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var skills []models.SkillDetails
+	for rows.Next() {
+		var skill models.SkillDetails
+		if err := rows.Scan(&skill.SkillId, &skill.Topic); err != nil {
+			return nil, err
+		}
+		skills = append(skills, skill)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return skills, nil
+}
+func (con *PostQreSQLCon) FetchSkillsBySkillID(skillID string) (*models.SkillDetails, error) {
+	query := `SELECT id, topic, intro, data, user_ids FROM skills WHERE id=$1;`
+	var skill models.SkillDetails
+	var dataJSON []byte
+
+	err := con.dbCon.QueryRow(query, skillID).Scan(&skill.SkillId, &skill.Topic, &skill.Intro, &dataJSON, pq.Array(&skill.UserIds))
+	if err != nil {
+		return nil, err
+	}
+
+	if err := json.Unmarshal(dataJSON, &skill.Data); err != nil {
+		return nil, err
+	}
+
+	return &skill, nil
+}
+func (con *PostQreSQLCon) SubmitSolutionByQIDandSkillID(qid string, skillid string) error {
+	return nil
 }

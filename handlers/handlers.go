@@ -3,6 +3,8 @@ package handlers
 import (
 	"Hack4Change/database"
 	"Hack4Change/helpers"
+	"bytes"
+	"encoding/json"
 
 	"Hack4Change/models"
 
@@ -38,7 +40,7 @@ func Login(c *gin.Context, db *database.PostQreSQLCon) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"token": token})
+	c.JSON(http.StatusOK, gin.H{"token": token, "userID": userID})
 }
 func Register(c *gin.Context, dbConn *database.PostQreSQLCon) {
 
@@ -83,7 +85,7 @@ func Register(c *gin.Context, dbConn *database.PostQreSQLCon) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"token": token})
+	c.JSON(http.StatusOK, gin.H{"token": token, "userId": userID})
 }
 
 func CreateProject(c *gin.Context, dbCon *database.PostQreSQLCon) {
@@ -209,7 +211,7 @@ func FetchFoldersByProjectId(c *gin.Context, db *database.PostQreSQLCon) {
 
 }
 func FetchProjectsByUserId(c *gin.Context, db *database.PostQreSQLCon) {
-	userId, exists := c.Get("userId")
+	userId, exists := c.Get("userID")
 	if !exists {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized access"})
 		return
@@ -222,7 +224,7 @@ func FetchProjectsByUserId(c *gin.Context, db *database.PostQreSQLCon) {
 	c.JSON(http.StatusOK, gin.H{"data": projectDetails})
 }
 func FetchUserData(c *gin.Context, db *database.PostQreSQLCon) {
-	userId, exists := c.Get("userId")
+	userId, exists := c.Get("userID")
 	if !exists {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized access"})
 		return
@@ -234,6 +236,79 @@ func FetchUserData(c *gin.Context, db *database.PostQreSQLCon) {
 	}
 	c.JSON(http.StatusOK, gin.H{"data": userDetails})
 }
-func UserProfile(c * gin.Context, db *database.PostQreSQLCon){
-	
+
+func Dashboard(c *gin.Context, db *database.PostQreSQLCon) {
+	userId, exists := c.Get("userID")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized access"})
+		return
+	}
+	payload, err := db.FetchSkillIdAndNameByUserID(userId.(string))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"data": payload})
+}
+func Status(c *gin.Context, db *database.PostQreSQLCon) {
+	var payload models.StatusReq
+	if err := c.ShouldBindJSON(&payload); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Wrong Request",
+		})
+		return
+	}
+
+	skillId := payload.SkillId
+
+	payload_, err := db.FetchSkillIdAndNameByUserID(skillId)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"data": payload_})
+
+}
+
+func SubmitSol(c *gin.Context, db *database.PostQreSQLCon) {
+	qid := c.Param("qid")
+	skillid := c.Param("id")
+	var payload models.SubmitSolReq
+	if err := c.ShouldBindJSON(&payload); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Wrong Request"})
+		return
+	}
+	if err := db.SubmitSolutionByQIDandSkillID(qid, skillid); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"message": "success"})
+
+}
+func GenerateSkill(c *gin.Context, db *database.PostQreSQLCon) {
+	var payload models.GenerateSkillsReq
+	if err := c.ShouldBindJSON(&payload); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	jsonData, err := json.Marshal(payload)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	resp, err := http.Post("http://localhost:5868/ai/generate-skill", "application/json", bytes.NewBuffer(jsonData))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	defer resp.Body.Close()
+	var payloadRes models.SkillRes
+	if err := json.NewDecoder(resp.Body).Decode(&payloadRes); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"data": payloadRes})
+}
+func BadgeHandler(c *gin.Context, db *database.PostQreSQLCon) {
+
 }

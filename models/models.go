@@ -46,6 +46,7 @@ type UserDetails struct {
 	SocialAccounts Socials   `json:"social_accounts"`
 	CreatedAt      time.Time `json:"created_at"`
 	UpdatedAt      time.Time `json:"updated_at"`
+	Badges         []Badge   `json:"badges"`
 }
 
 type CreateProjectReq struct {
@@ -120,4 +121,52 @@ type SaveFileRequest struct {
 	ProjectID uuid.UUID `json:"projectId"`
 	FileID    uuid.UUID `json:"fileId"`
 	Content   string    `json:"content"`
+}
+
+type Badge struct {
+	Name        string   `json:"name"`
+	Topics      []string `json:"topics"`
+	Topics_done []string `json:"topics_done"`
+	Completed   bool     `json:"completed"`
+}
+
+type Skill struct {
+	Topic   string      `json:"topic"`
+	Intro   string      `json:"intro"`
+	UserIds []string    `json:"userids"`
+	Data    []SkillData `json:"data"`
+}
+
+type SkillData struct {
+	Question   string `json:"question"`
+	QuestionId string `json:"question_id"`
+	Tutorial   string `json:"tutorial"`
+	ExpectedOP string `json:"expected_op"`
+	UserCode   string `json:"user_code"`
+	Completed  bool   `json:"completed"`
+}
+
+type SkillDetails struct {
+	Topic   string      `json:"topic"`
+	SkillId string      `json:"skill_id"`
+	Intro   string      `json:"intro"`
+	UserIds []string    `json:"userids"`
+	Data    []SkillData `json:"data"`
+}
+
+type SkillRes struct {
+	Topic string      `json:"topic"`
+	Intro string      `json:"intro"`
+	Data  []SkillData `json:"data"`
+}
+type StatusReq struct {
+	SkillId string `json:"skill_id"`
+}
+
+type GenerateSkillsReq struct {
+	Difficulty string `json:"difficulty"`
+	Topic      string `json:"topic"`
+}
+type SubmitSolReq struct {
+	Code string `json:"code"`
 }
