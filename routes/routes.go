@@ -23,7 +23,7 @@ func InitializeRoutes(router *gin.Engine, dbConn *database.PostQreSQLCon) {
 		authGroup.POST("/register", func(c *gin.Context) {
 			handlers.Register(c, dbConn)
 		})
-		authGroup.GET("/login", func(c *gin.Context) {
+		authGroup.POST("/login", func(c *gin.Context) {
 			handlers.Login(c, dbConn)
 		})
 	}
@@ -53,6 +53,7 @@ func InitializeRoutes(router *gin.Engine, dbConn *database.PostQreSQLCon) {
 		})
 	}
 	userGroup := router.Group("/user")
+	userGroup.Use(middleware.AuthMiddleware())
 	{
 		userGroup.GET("/profile", func(c *gin.Context) {
 			handlers.FetchUserData(c, dbConn)
@@ -76,5 +77,12 @@ func InitializeRoutes(router *gin.Engine, dbConn *database.PostQreSQLCon) {
 			})
 		}
 
+	}
+	deleteGroup := router.Group("/delete")
+	deleteGroup.Use(middleware.AuthMiddleware())
+	{
+		deleteGroup.GET("/:name", func(c *gin.Context) {
+			handlers.DeleteTables(c, dbConn)
+		})
 	}
 }

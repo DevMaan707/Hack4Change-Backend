@@ -50,7 +50,6 @@ type UserDetails struct {
 }
 
 type CreateProjectReq struct {
-	ProjectID          string `json:"project_id" validate:"required"`
 	ProjectName        string `json:"project_name" validate:"required,min=3,max=50"`
 	ProjectDescription string `json:"project_description" validate:"omitempty,max=255"`
 }

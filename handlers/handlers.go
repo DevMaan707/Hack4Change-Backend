@@ -38,6 +38,7 @@ func Login(c *gin.Context, db *database.PostQreSQLCon) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+	slog.Info("FETCHED PASSWORD", "hashed password", hashedPassword)
 
 	check := helpers.CheckPasswordHash(hashedPassword, login.Password)
 	if !check {
@@ -403,4 +404,36 @@ func GenerateSkill(c *gin.Context, db *database.PostQreSQLCon) {
 
 func BadgeHandler(c *gin.Context, db *database.PostQreSQLCon) {
 	// Implement logging as needed when the function is implemented
+}
+
+func DeleteTables(c *gin.Context, db *database.PostQreSQLCon) {
+	tableName := c.Param("name")
+
+	var err error
+	switch tableName {
+	case "users":
+		err = db.DropUsersTable()
+	case "socials":
+		err = db.DropSocialsTable()
+	case "projects":
+		err = db.DropProjectsTable()
+	case "files":
+		err = db.DropFilesTable()
+	case "folders":
+		err = db.DropFoldersTable()
+	case "skills":
+		err = db.DropSkillsTable()
+	case "all":
+		err = db.DropAllTables()
+	default:
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid table name"})
+		return
+	}
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Table dropped successfully"})
 }
