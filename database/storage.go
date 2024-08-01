@@ -3,6 +3,7 @@ package database
 import (
 	"Hack4Change/models"
 	"encoding/json"
+	"log/slog"
 
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
@@ -218,34 +219,38 @@ func (pg *PostQreSQLCon) InsertProject(project models.ProjectDetails) error {
 	return err
 }
 func (pg *PostQreSQLCon) InsertFile(file models.File) error {
-	// Convert empty string to nil
 	var parentFolderId interface{}
-	if file.ParentFolderId == nil {
+	if file.ParentFolderId == nil || *file.ParentFolderId == "" {
 		parentFolderId = nil
 	} else {
-		parentFolderId = file.ParentFolderId
+		parentFolderId = *file.ParentFolderId
 	}
 
 	query := `INSERT INTO files (file_uid, project_id, parent_folder_id, file_name, file_content, created_at, updated_at)
               VALUES ($1, $2, $3, $4, $5, NOW(), NOW())`
 
 	_, err := pg.dbCon.Exec(query, file.ID, file.ProjectID, parentFolderId, file.FileName, file.FileContent)
+	if err != nil {
+		slog.Error("InsertFile: Error inserting file", "fileID", file.ID, "error", err)
+	}
 	return err
 }
 
 func (pg *PostQreSQLCon) InsertFolder(folder models.Folder) error {
-	query := `INSERT INTO folders (folder_uid, project_id, folder_name, parent_folder_id, created_at, updated_at)
-              VALUES ($1, $2, $3, $4, NOW(), NOW())`
-
-	// Handle ParentFolderId being optional
 	var parentFolderId interface{}
-	if folder.ParentFolderId == nil {
+	if folder.ParentFolderId == nil || *folder.ParentFolderId == "" {
 		parentFolderId = nil
 	} else {
 		parentFolderId = *folder.ParentFolderId
 	}
 
+	query := `INSERT INTO folders (folder_uid, project_id, folder_name, parent_folder_id, created_at, updated_at)
+              VALUES ($1, $2, $3, $4, NOW(), NOW())`
+
 	_, err := pg.dbCon.Exec(query, folder.ID, folder.ProjectID, folder.FolderName, parentFolderId)
+	if err != nil {
+		slog.Error("InsertFolder: Error inserting folder", "folderID", folder.ID, "error", err)
+	}
 	return err
 }
 
@@ -492,4 +497,125 @@ func (con *PostQreSQLCon) UpdateSocialAccounts(userId string, socials models.Soc
 	query := `UPDATE users SET social_accounts = $1, updated_at = NOW() WHERE user_uid = $2`
 	_, err = con.dbCon.Exec(query, socialAccountsJSON, userId)
 	return err
+}
+func (pg *PostQreSQLCon) GetFoldersWithContents(projectID string) ([]models.FolderDetails, error) {
+	query := `
+        SELECT folder_uid, project_id, folder_name, parent_folder_id, created_at, updated_at
+        FROM folders
+        WHERE project_id = $1
+    `
+	rows, err := pg.dbCon.Query(query, projectID)
+	if err != nil {
+		slog.Error("GetFoldersWithContents: Error querying folders", "projectID", projectID, "error", err)
+		return nil, err
+	}
+	defer rows.Close()
+
+	var folders []models.FolderDetails
+	for rows.Next() {
+		var folder models.FolderDetails
+		if err := rows.Scan(&folder.ID, &folder.ProjectID, &folder.FolderName, &folder.ParentFolderId, &folder.CreatedAt, &folder.UpdatedAt); err != nil {
+			slog.Error("GetFoldersWithContents: Error scanning folder", "projectID", projectID, "error", err)
+			return nil, err
+		}
+
+		files, err := pg.GetFilesInFolder(folder.ID)
+		if err != nil {
+			slog.Error("GetFoldersWithContents: Error fetching files in folder", "folderID", folder.ID, "error", err)
+			return nil, err
+		}
+		folder.Files = files
+		folders = append(folders, folder)
+	}
+
+	if err = rows.Err(); err != nil {
+		slog.Error("GetFoldersWithContents: Error with rows", "projectID", projectID, "error", err)
+		return nil, err
+	}
+
+	return folders, nil
+}
+
+func (pg *PostQreSQLCon) GetFilesInFolder(folderID string) ([]models.File, error) {
+	query := `
+        SELECT file_uid, project_id, parent_folder_id, file_name, file_content, created_at, updated_at
+        FROM files
+        WHERE parent_folder_id = $1
+    `
+	rows, err := pg.dbCon.Query(query, folderID)
+	if err != nil {
+		slog.Error("GetFilesInFolder: Error querying files", "folderID", folderID, "error", err)
+		return nil, err
+	}
+	defer rows.Close()
+
+	var files []models.File
+	for rows.Next() {
+		var file models.File
+		if err := rows.Scan(&file.ID, &file.ProjectID, &file.ParentFolderId, &file.FileName, &file.FileContent, &file.CreatedAt, &file.UpdatedAt); err != nil {
+			slog.Error("GetFilesInFolder: Error scanning file", "folderID", folderID, "error", err)
+			return nil, err
+		}
+		files = append(files, file)
+	}
+
+	if err = rows.Err(); err != nil {
+		slog.Error("GetFilesInFolder: Error with rows", "folderID", folderID, "error", err)
+		return nil, err
+	}
+
+	return files, nil
+}
+
+func (pg *PostQreSQLCon) GetRootFiles(projectID string) ([]models.File, error) {
+	query := `
+        SELECT file_uid, project_id, parent_folder_id, file_name, file_content, created_at, updated_at
+        FROM files
+        WHERE project_id = $1 AND parent_folder_id IS NULL
+    `
+	rows, err := pg.dbCon.Query(query, projectID)
+	if err != nil {
+		slog.Error("GetRootFiles: Error querying root files", "projectID", projectID, "error", err)
+		return nil, err
+	}
+	defer rows.Close()
+
+	var files []models.File
+	for rows.Next() {
+		var file models.File
+		if err := rows.Scan(&file.ID, &file.ProjectID, &file.ParentFolderId, &file.FileName, &file.FileContent, &file.CreatedAt, &file.UpdatedAt); err != nil {
+			slog.Error("GetRootFiles: Error scanning file", "projectID", projectID, "error", err)
+			return nil, err
+		}
+		files = append(files, file)
+	}
+
+	if err = rows.Err(); err != nil {
+		slog.Error("GetRootFiles: Error with rows", "projectID", projectID, "error", err)
+		return nil, err
+	}
+
+	return files, nil
+}
+
+func (pg *PostQreSQLCon) GetProjectStructure(projectID string) (models.ProjectContents, error) {
+	var projectContents models.ProjectContents
+
+	// Fetch folders and their contents
+	folders, err := pg.GetFoldersWithContents(projectID)
+	if err != nil {
+		slog.Error("GetProjectStructure: Error fetching folders with contents", "projectID", projectID, "error", err)
+		return projectContents, err
+	}
+	projectContents.Folders = folders
+
+	// Fetch root-level files
+	rootFiles, err := pg.GetRootFiles(projectID)
+	if err != nil {
+		slog.Error("GetProjectStructure: Error fetching root files", "projectID", projectID, "error", err)
+		return projectContents, err
+	}
+	projectContents.Files = rootFiles
+
+	return projectContents, nil
 }

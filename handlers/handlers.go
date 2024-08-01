@@ -169,12 +169,17 @@ func CreateFile(c *gin.Context, dbCon *database.PostQreSQLCon) {
 	}
 
 	fileID := uuid.New().String()
+	var parentFolderId *string
+	if payload.ParentFolderId != nil && *payload.ParentFolderId != "" {
+		parentFolderId = payload.ParentFolderId
+	}
+
 	file := models.File{
 		ID:             fileID,
 		ProjectID:      payload.ProjectID,
 		FileName:       payload.FileName,
 		FileContent:    payload.FileContent,
-		ParentFolderId: payload.ParentFolderId,
+		ParentFolderId: parentFolderId,
 		CreatedAt:      time.Now(),
 		UpdatedAt:      time.Now(),
 	}
@@ -208,7 +213,7 @@ func CreateFolder(c *gin.Context, dbCon *database.PostQreSQLCon) {
 	folderID := uuid.New().String()
 
 	var parentFolderId *string
-	if payload.ParentFolderId != nil {
+	if payload.ParentFolderId != nil && *payload.ParentFolderId != "" {
 		parentFolderId = payload.ParentFolderId
 	}
 
@@ -473,4 +478,17 @@ func UpdateUserProfile(c *gin.Context, db *database.PostQreSQLCon) {
 
 func FetchFilesAndFoldersByProjectId(c *gin.Context, db *database.PostQreSQLCon) {
 
+}
+func GetProjectStructureHandler(c *gin.Context, dbCon *database.PostQreSQLCon) {
+	projectID := c.Param("id")
+	slog.Info("Fetching project structure", "projectID", projectID)
+
+	projectContents, err := dbCon.GetProjectStructure(projectID)
+	if err != nil {
+		slog.Error("Failed to fetch project structure", "projectID", projectID, "error", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch project structure"})
+		return
+	}
+
+	c.JSON(http.StatusOK, projectContents)
 }

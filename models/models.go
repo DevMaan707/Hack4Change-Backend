@@ -112,9 +112,10 @@ type FolderDetails struct {
 	ID             string    `json:"id"`
 	ProjectID      string    `json:"project_id"`
 	FolderName     string    `json:"folder_name"`
-	ParentFolderId string    `json:"parent_folder_id"`
+	ParentFolderId *string   `json:"parent_folder_id"`
 	CreatedAt      time.Time `json:"created_at"`
 	UpdatedAt      time.Time `json:"updated_at"`
+	Files          []File    `json:"files"`
 }
 type SaveFileRequest struct {
 	ProjectID uuid.UUID `json:"projectId"`
@@ -168,4 +169,9 @@ type GenerateSkillsReq struct {
 }
 type SubmitSolReq struct {
 	Code string `json:"code"`
+}
+
+type ProjectContents struct {
+	Folders []FolderDetails `json:"folders"`
+	Files   []File          `json:"files"`
 }

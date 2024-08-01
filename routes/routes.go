@@ -60,6 +60,9 @@ func InitializeRoutes(router *gin.Engine, dbConn *database.PostQreSQLCon) {
 			handlers.FetchProjectsByUserId(c, dbConn)
 
 		})
+		spaceGroup.GET("/:id/structure", func(c *gin.Context) {
+			handlers.GetProjectStructureHandler(c, dbConn)
+		})
 	}
 	userGroup := router.Group("/user")
 	userGroup.Use(middleware.AuthMiddleware())
