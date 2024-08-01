@@ -56,7 +56,7 @@ type CreateProjectReq struct {
 
 type ProjectDetails struct {
 	ProjectID          string    `json:"project_id"`
-	OwnerID            string    `json:"owner_id"`
+	OwnerID            string    `json:"user_id"`
 	ProjectName        string    `json:"project_name"`
 	ProjectDescription string    `json:"project_description"`
 	CreatedAt          time.Time `json:"created_at"`

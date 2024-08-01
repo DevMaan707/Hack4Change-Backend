@@ -297,7 +297,7 @@ func FetchUserData(c *gin.Context, db *database.PostQreSQLCon) {
 		return
 	}
 
-	userDetails, err := db.FetchProjectsByUserId(userId.(string))
+	userDetails, err := db.FetchUserDetails(userId.(string))
 	if err != nil {
 		slog.Error("FetchUserData failed: Error fetching user data", "userId", userId, "error", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -436,4 +436,29 @@ func DeleteTables(c *gin.Context, db *database.PostQreSQLCon) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "Table dropped successfully"})
+}
+func UpdateUserProfile(c *gin.Context, db *database.PostQreSQLCon) {
+	userId, exists := c.Get("userID")
+	if !exists {
+		slog.Warn("UpdateUserProfile failed: Unauthorized access")
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized access"})
+		return
+	}
+
+	var socials models.Socials
+	if err := c.ShouldBindJSON(&socials); err != nil {
+		slog.Error("UpdateUserProfile failed: Invalid request payload", "error", err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request payload"})
+		return
+	}
+
+	err := db.UpdateSocialAccounts(userId.(string), socials)
+	if err != nil {
+		slog.Error("UpdateUserProfile failed: Error updating social accounts", "userId", userId, "error", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	slog.Info("User profile updated successfully", "userId", userId)
+	c.JSON(http.StatusOK, gin.H{"message": "User profile updated successfully"})
 }

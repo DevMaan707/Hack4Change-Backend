@@ -51,6 +51,10 @@ func InitializeRoutes(router *gin.Engine, dbConn *database.PostQreSQLCon) {
 		spaceGroup.POST("/create-space", func(c *gin.Context) {
 			handlers.CreateProject(c, dbConn)
 		})
+		spaceGroup.GET("/details", func(c *gin.Context) {
+			handlers.FetchProjectsByUserId(c, dbConn)
+
+		})
 	}
 	userGroup := router.Group("/user")
 	userGroup.Use(middleware.AuthMiddleware())
@@ -58,7 +62,9 @@ func InitializeRoutes(router *gin.Engine, dbConn *database.PostQreSQLCon) {
 		userGroup.GET("/profile", func(c *gin.Context) {
 			handlers.FetchUserData(c, dbConn)
 		})
-
+		userGroup.POST("/update-socials", func(c *gin.Context) {
+			handlers.UpdateUserProfile(c, dbConn)
+		})
 		academyGroup := userGroup.Group("/academy")
 		{
 			academyGroup.GET("/dashboard", func(c *gin.Context) {

@@ -180,9 +180,24 @@ func (pg *PostQreSQLCon) CreateSkillsTable() error {
 }
 
 func (pg *PostQreSQLCon) InsertUser(user models.UserDetails, passwordHash string) error {
-	query := `INSERT INTO users (user_uid, username, email, phone, first_name, last_name, password_hash, created_at, updated_at)
-              VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW())`
-	_, err := pg.dbCon.Exec(query, user.ID, user.Username, user.Email, user.Phone, user.FirstName, user.LastName, passwordHash)
+	// Initialize dummy values for social_accounts and badges
+	emptySocials := models.Socials{}
+	emptyBadges := []models.Badge{}
+
+	// Convert these dummy values to JSON
+	socialAccountsJSON, err := json.Marshal(emptySocials)
+	if err != nil {
+		return err
+	}
+
+	badgesJSON, err := json.Marshal(emptyBadges)
+	if err != nil {
+		return err
+	}
+
+	query := `INSERT INTO users (user_uid, username, email, phone, first_name, last_name, password_hash, social_accounts, badges, created_at, updated_at)
+              VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW(), NOW())`
+	_, err = pg.dbCon.Exec(query, user.ID, user.Username, user.Email, user.Phone, user.FirstName, user.LastName, passwordHash, socialAccountsJSON, badgesJSON)
 	return err
 }
 
@@ -235,7 +250,7 @@ func (con *PostQreSQLCon) FetchUserIdByEmail(email string) (string, error) {
 }
 
 func (con *PostQreSQLCon) FetchProjectsByUserId(userId string) ([]models.ProjectDetails, error) {
-	query := `SELECT project_uid, project_name, project_description FROM projects WHERE user_id = $1`
+	query := `SELECT project_uid, user_id, project_name, project_description FROM projects WHERE user_id = $1`
 	rows, err := con.dbCon.Queryx(query, userId)
 	if err != nil {
 		return nil, err
@@ -245,7 +260,7 @@ func (con *PostQreSQLCon) FetchProjectsByUserId(userId string) ([]models.Project
 	projects := []models.ProjectDetails{}
 	for rows.Next() {
 		var project models.ProjectDetails
-		err := rows.Scan(&project.ProjectID, &project.ProjectName, &project.ProjectDescription)
+		err := rows.Scan(&project.ProjectID, &project.OwnerID, &project.ProjectName, &project.ProjectDescription)
 		if err != nil {
 			return nil, err
 		}
@@ -301,7 +316,7 @@ func (con *PostQreSQLCon) SaveContent(content string) error {
 	return nil
 }
 func (con *PostQreSQLCon) FetchUserDetails(userId string) (*models.UserDetails, error) {
-	query := `SELECT user_uid, username, email, phone, first_name, last_name, social_accounts, badges, created_at, updated_at FROM users WHERE id=$1;`
+	query := `SELECT user_uid, username, email, phone, first_name, last_name, social_accounts, badges, created_at, updated_at FROM users WHERE user_uid=$1`
 	var user models.UserDetails
 	var socialAccountsJSON, badgesJSON []byte
 
@@ -443,4 +458,15 @@ func (pg *PostQreSQLCon) DropAllTables() error {
 		}
 	}
 	return nil
+}
+
+func (con *PostQreSQLCon) UpdateSocialAccounts(userId string, socials models.Socials) error {
+	socialAccountsJSON, err := json.Marshal(socials)
+	if err != nil {
+		return err
+	}
+
+	query := `UPDATE users SET social_accounts = $1, updated_at = NOW() WHERE user_uid = $2`
+	_, err = con.dbCon.Exec(query, socialAccountsJSON, userId)
+	return err
 }
