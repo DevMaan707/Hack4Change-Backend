@@ -1,24 +1,30 @@
 package database
 
 import (
-	"database/sql"
 	"fmt"
-	"os"
+	"log/slog"
+
+	"github.com/jmoiron/sqlx"
+
+	_ "github.com/lib/pq"
 )
 
 func ConnectPostgreSQL() (*PostQreSQLCon, error) {
-	connStr := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
-		os.Getenv("DB_HOST"), os.Getenv("DB_PORT"), os.Getenv("DB_USER"), os.Getenv("DB_PASSWORD"), os.Getenv("DB_NAME"))
 
-	db, err := sql.Open("postgres", connStr)
+	db, err := sqlx.Connect("postgres", "user=postgres dbname=postgres sslmode=require password=aymaan132 host=database.c9oigwacc6k7.ap-south-1.rds.amazonaws.com")
 	if err != nil {
-		return nil, err
+		slog.Error("Failed to open database connection", slog.String("error", err.Error()))
+		return nil, fmt.Errorf("failed to open database connection: %w", err)
 	}
+
 	if err := db.Ping(); err != nil {
-		return nil, err
+		slog.Error("Failed to ping database", slog.String("error", err.Error()))
+		return nil, fmt.Errorf("failed to ping database: %w", err)
 	}
+
+	slog.Info("Successfully connected to the database")
+
 	return &PostQreSQLCon{
 		dbCon: db,
 	}, nil
-
 }

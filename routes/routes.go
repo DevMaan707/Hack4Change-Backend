@@ -14,7 +14,9 @@ func InitializeRoutes(router *gin.Engine, dbConn *database.PostQreSQLCon) {
 	router.GET("/test", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"message": "success"})
 	})
-
+	router.GET("/create-tables", func(c *gin.Context) {
+		handlers.CreateTables(c, dbConn)
+	})
 	// Auth APIs
 	authGroup := router.Group("/auth")
 	{

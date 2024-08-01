@@ -2,71 +2,73 @@ package database
 
 import (
 	"Hack4Change/models"
-	"database/sql"
 	"encoding/json"
 
 	"github.com/google/uuid"
+	"github.com/jmoiron/sqlx"
 	"github.com/lib/pq"
 )
 
 type PostQreSQLCon struct {
-	dbCon *sql.DB
+	dbCon *sqlx.DB
 }
 
 func (pg *PostQreSQLCon) CreateTables() error {
 	queries := []string{
 		`CREATE TABLE IF NOT EXISTS users (
-	id UUID PRIMARY KEY,
-	username VARCHAR(32) NOT NULL UNIQUE,
-	email VARCHAR(255) NOT NULL UNIQUE,
-	phone VARCHAR(20),
-	first_name VARCHAR(32),
-	last_name VARCHAR(32),
-	password_hash TEXT NOT NULL,
-	social_accounts JSONB,
-	badges JSONB,
-	created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-	updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
-`,
-		`CREATE TABLE IF NOT EXISTS socials (
-			user_id UUID REFERENCES users(id) ON DELETE CASCADE,
-			github VARCHAR(255),
-			linkedin VARCHAR(255),
-			instagram VARCHAR(255),
-			noobs_social VARCHAR(255),
-			PRIMARY KEY (user_id)
-		);`,
-		`CREATE TABLE IF NOT EXISTS projects (
-			
-			user_id UUID REFERENCES users(id),
-			project_id VARCHAR(50) NOT NULL,
-			project_name VARCHAR(50) NOT NULL,
-			project_description VARCHAR(255),
-			created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-			updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-		);`,
-		`CREATE TABLE IF NOT EXISTS files (
-			id UUID PRIMARY KEY,
-			project_id UUID REFERENCES projects(id) ON DELETE CASCADE,
-			file_name VARCHAR(255) NOT NULL,
-			file_content TEXT NOT NULL,
-			created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-			updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-		);`,
-		`CREATE TABLE IF NOT EXISTS folders (
-			id UUID PRIMARY KEY,
-			project_id UUID REFERENCES projects(id) ON DELETE CASCADE,
-			folder_name VARCHAR(255) NOT NULL,
-			created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-			updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-		);`,
-		`CREATE TABLE IF NOT EXISTS skills (
-	id UUID PRIMARY KEY,
-	topic VARCHAR(255) NOT NULL,
-	intro TEXT NOT NULL,
-	data JSONB NOT NULL,
-	user_ids TEXT[] NOT NULL
+    id UUID PRIMARY KEY,
+    username VARCHAR(32) NOT NULL UNIQUE,
+    email VARCHAR(255) NOT NULL UNIQUE,
+    phone VARCHAR(20),
+    first_name VARCHAR(32),
+    last_name VARCHAR(32),
+    password_hash TEXT NOT NULL,
+    social_accounts JSONB,
+    badges JSONB,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);`, `
+
+CREATE TABLE IF NOT EXISTS socials (
+    user_id UUID PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+    github VARCHAR(255),
+    linkedin VARCHAR(255),
+    instagram VARCHAR(255),
+    noobs_social VARCHAR(255)
+);`, `
+
+CREATE TABLE IF NOT EXISTS projects (
+    id UUID PRIMARY KEY,
+    user_id UUID REFERENCES users(id),
+    project_name VARCHAR(50) NOT NULL,
+    project_description VARCHAR(255),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);`, `
+
+CREATE TABLE IF NOT EXISTS files (
+    id UUID PRIMARY KEY,
+    project_id UUID REFERENCES projects(id) ON DELETE CASCADE,
+    file_name VARCHAR(255) NOT NULL,
+    file_content TEXT NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);`, `
+
+CREATE TABLE IF NOT EXISTS folders (
+    id UUID PRIMARY KEY,
+    project_id UUID REFERENCES projects(id) ON DELETE CASCADE,
+    folder_name VARCHAR(255) NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);`, `
+
+CREATE TABLE IF NOT EXISTS skills (
+    id UUID PRIMARY KEY,
+    topic VARCHAR(255) NOT NULL,
+    intro TEXT NOT NULL,
+    data JSONB NOT NULL,
+    user_ids TEXT[] NOT NULL
 );`,
 	}
 
@@ -93,7 +95,7 @@ func (pg *PostQreSQLCon) InsertSocialAccounts(userID string, socials models.Soci
 }
 
 func (pg *PostQreSQLCon) InsertProject(project models.ProjectDetails) error {
-	query := `INSERT INTO projects ( project_id, user_id, project_name, project_description, created_at, updated_at)
+	query := `INSERT INTO projects (id, user_id, project_name, project_description, created_at, updated_at)
               VALUES ($1, $2, $3, $4, NOW(), NOW())`
 	_, err := pg.dbCon.Exec(query, project.ProjectID, project.OwnerID, project.ProjectName, project.ProjectDescription)
 	return err
@@ -263,6 +265,7 @@ func (con *PostQreSQLCon) FetchSkillIdAndNameByUserID(userID string) ([]models.S
 
 	return skills, nil
 }
+
 func (con *PostQreSQLCon) FetchSkillsBySkillID(skillID string) (*models.SkillDetails, error) {
 	query := `SELECT id, topic, intro, data, user_ids FROM skills WHERE id=$1;`
 	var skill models.SkillDetails
