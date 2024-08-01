@@ -86,12 +86,13 @@ func (pg *PostQreSQLCon) CreateTables() error {
 	if err := pg.CreateProjectsTable(); err != nil {
 		return err
 	}
-	if err := pg.CreateFilesTable(); err != nil {
-		return err
-	}
 	if err := pg.CreateFoldersTable(); err != nil {
 		return err
 	}
+	if err := pg.CreateFilesTable(); err != nil {
+		return err
+	}
+
 	if err := pg.CreateSkillsTable(); err != nil {
 		return err
 	}
@@ -148,6 +149,7 @@ func (pg *PostQreSQLCon) CreateFilesTable() error {
 		project_id UUID REFERENCES projects(project_uid) ON DELETE CASCADE,
 		file_name VARCHAR(255) NOT NULL,
 		file_content TEXT NOT NULL,
+		parent_folder_id UUID REFERENCES folders(folder_uid) ON DELETE SET NULL,
 		created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 		updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 	);`
@@ -160,6 +162,7 @@ func (pg *PostQreSQLCon) CreateFoldersTable() error {
 		folder_uid UUID PRIMARY KEY,
 		project_id UUID REFERENCES projects(project_uid) ON DELETE CASCADE,
 		folder_name VARCHAR(255) NOT NULL,
+		parent_folder_id UUID REFERENCES folders(folder_uid) ON DELETE SET NULL,
 		created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 		updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 	);`
@@ -214,18 +217,35 @@ func (pg *PostQreSQLCon) InsertProject(project models.ProjectDetails) error {
 	_, err := pg.dbCon.Exec(query, project.ProjectID, project.OwnerID, project.ProjectName, project.ProjectDescription)
 	return err
 }
-
 func (pg *PostQreSQLCon) InsertFile(file models.File) error {
-	query := `INSERT INTO files (file_uid, project_id, file_name, file_content, created_at, updated_at)
-              VALUES ($1, $2, $3, $4, NOW(), NOW())`
-	_, err := pg.dbCon.Exec(query, file.ID, file.ProjectID, file.FileName, file.FileContent)
+	// Convert empty string to nil
+	var parentFolderId interface{}
+	if file.ParentFolderId == nil {
+		parentFolderId = nil
+	} else {
+		parentFolderId = file.ParentFolderId
+	}
+
+	query := `INSERT INTO files (file_uid, project_id, parent_folder_id, file_name, file_content, created_at, updated_at)
+              VALUES ($1, $2, $3, $4, $5, NOW(), NOW())`
+
+	_, err := pg.dbCon.Exec(query, file.ID, file.ProjectID, parentFolderId, file.FileName, file.FileContent)
 	return err
 }
 
 func (pg *PostQreSQLCon) InsertFolder(folder models.Folder) error {
-	query := `INSERT INTO folders (folder_uid, project_id, folder_name, created_at, updated_at)
-              VALUES ($1, $2, $3, NOW(), NOW())`
-	_, err := pg.dbCon.Exec(query, folder.ID, folder.ProjectID, folder.FolderName)
+	query := `INSERT INTO folders (folder_uid, project_id, folder_name, parent_folder_id, created_at, updated_at)
+              VALUES ($1, $2, $3, $4, NOW(), NOW())`
+
+	// Handle ParentFolderId being optional
+	var parentFolderId interface{}
+	if folder.ParentFolderId == nil {
+		parentFolderId = nil
+	} else {
+		parentFolderId = *folder.ParentFolderId
+	}
+
+	_, err := pg.dbCon.Exec(query, folder.ID, folder.ProjectID, folder.FolderName, parentFolderId)
 	return err
 }
 
@@ -270,24 +290,27 @@ func (con *PostQreSQLCon) FetchProjectsByUserId(userId string) ([]models.Project
 }
 
 func (con *PostQreSQLCon) FetchFilesByProjectId(projectId string) ([]models.File, error) {
-	query := `SELECT file_uid, file_name, file_content FROM files WHERE project_id = $1`
+	query := `SELECT file_uid, project_id, parent_folder_id, file_name, file_content, created_at, updated_at 
+              FROM files WHERE project_id = $1`
 	rows, err := con.dbCon.Queryx(query, projectId)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
-	files := []models.File{}
+	var files []models.File
 	for rows.Next() {
 		var file models.File
-		err := rows.Scan(&file.ID, &file.FileName, &file.FileContent)
+		err := rows.Scan(&file.ID, &file.ProjectID, &file.ParentFolderId, &file.FileName, &file.FileContent, &file.CreatedAt, &file.UpdatedAt)
 		if err != nil {
 			return nil, err
 		}
 		files = append(files, file)
 	}
+
 	return files, nil
 }
+
 func (con *PostQreSQLCon) FetchFoldersByProjectId(projectId string) ([]models.FolderDetails, error) {
 	query := `SELECT folder_uid, project_id, folder_name, created_at, updated_at FROM folders WHERE project_id =$1;`
 	rows, err := con.dbCon.Query(query, projectId)

@@ -170,10 +170,13 @@ func CreateFile(c *gin.Context, dbCon *database.PostQreSQLCon) {
 
 	fileID := uuid.New().String()
 	file := models.File{
+		ID:             fileID,
 		ProjectID:      payload.ProjectID,
 		FileName:       payload.FileName,
-		ID:             fileID,
+		FileContent:    payload.FileContent,
 		ParentFolderId: payload.ParentFolderId,
+		CreatedAt:      time.Now(),
+		UpdatedAt:      time.Now(),
 	}
 
 	err := dbCon.InsertFile(file)
@@ -204,11 +207,16 @@ func CreateFolder(c *gin.Context, dbCon *database.PostQreSQLCon) {
 
 	folderID := uuid.New().String()
 
+	var parentFolderId *string
+	if payload.ParentFolderId != nil {
+		parentFolderId = payload.ParentFolderId
+	}
+
 	folder := models.Folder{
-		ProjectID:      payload.ProjectID,
-		ParentFolderId: payload.ParentFolderId,
 		ID:             folderID,
+		ProjectID:      payload.ProjectID,
 		FolderName:     payload.FolderName,
+		ParentFolderId: parentFolderId,
 		CreatedAt:      time.Now(),
 		UpdatedAt:      time.Now(),
 	}
@@ -461,4 +469,8 @@ func UpdateUserProfile(c *gin.Context, db *database.PostQreSQLCon) {
 
 	slog.Info("User profile updated successfully", "userId", userId)
 	c.JSON(http.StatusOK, gin.H{"message": "User profile updated successfully"})
+}
+
+func FetchFilesAndFoldersByProjectId(c *gin.Context, db *database.PostQreSQLCon) {
+
 }

@@ -10,7 +10,7 @@ import (
 )
 
 func InitializeRoutes(router *gin.Engine, dbConn *database.PostQreSQLCon) {
-	// Test route
+	// Tested
 	router.GET("/test", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"message": "success"})
 	})
@@ -18,6 +18,7 @@ func InitializeRoutes(router *gin.Engine, dbConn *database.PostQreSQLCon) {
 		handlers.CreateTables(c, dbConn)
 	})
 	// Auth APIs
+	//Tested
 	authGroup := router.Group("/auth")
 	{
 		authGroup.POST("/register", func(c *gin.Context) {
@@ -32,10 +33,13 @@ func InitializeRoutes(router *gin.Engine, dbConn *database.PostQreSQLCon) {
 	spaceGroup := router.Group("/space")
 	spaceGroup.Use(middleware.AuthMiddleware())
 	{
+		//Tested
 		spaceGroup.GET("/:id/get-files", func(c *gin.Context) {
 			handlers.FetchFilesByProjectId(c, dbConn)
 		})
-
+		spaceGroup.GET("/:id/details", func(c *gin.Context) {
+			handlers.FetchFilesAndFoldersByProjectId(c, dbConn)
+		})
 		spaceGroup.POST("/:id/create-folder", func(c *gin.Context) {
 			handlers.CreateFolder(c, dbConn)
 		})
@@ -47,10 +51,11 @@ func InitializeRoutes(router *gin.Engine, dbConn *database.PostQreSQLCon) {
 		spaceGroup.POST("/:id/save-file", func(c *gin.Context) {
 			handlers.SaveFileContent(c, dbConn)
 		})
-
+		//Tested
 		spaceGroup.POST("/create-space", func(c *gin.Context) {
 			handlers.CreateProject(c, dbConn)
 		})
+		//Tested
 		spaceGroup.GET("/details", func(c *gin.Context) {
 			handlers.FetchProjectsByUserId(c, dbConn)
 
@@ -59,9 +64,11 @@ func InitializeRoutes(router *gin.Engine, dbConn *database.PostQreSQLCon) {
 	userGroup := router.Group("/user")
 	userGroup.Use(middleware.AuthMiddleware())
 	{
+		//Tested
 		userGroup.GET("/profile", func(c *gin.Context) {
 			handlers.FetchUserData(c, dbConn)
 		})
+		//Tested
 		userGroup.POST("/update-socials", func(c *gin.Context) {
 			handlers.UpdateUserProfile(c, dbConn)
 		})
@@ -84,6 +91,7 @@ func InitializeRoutes(router *gin.Engine, dbConn *database.PostQreSQLCon) {
 		}
 
 	}
+	//Tested
 	deleteGroup := router.Group("/delete")
 	deleteGroup.Use(middleware.AuthMiddleware())
 	{

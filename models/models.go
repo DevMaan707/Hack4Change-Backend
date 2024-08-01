@@ -66,7 +66,7 @@ type ProjectDetails struct {
 type File struct {
 	ID             string    `json:"id"`
 	ProjectID      string    `json:"project_id"`
-	ParentFolderId string    `json:"parent_folder_id"`
+	ParentFolderId *string   `json:"parent_folder_id"`
 	FileName       string    `json:"file_name" validate:"required,min=1,max=255"`
 	FileContent    string    `json:"file_content" validate:"required"`
 	CreatedAt      time.Time `json:"created_at"`
@@ -74,10 +74,10 @@ type File struct {
 }
 
 type Folder struct {
-	ID             string `json:"id"`
-	ProjectID      string `json:"project_id"`
-	FolderName     string `json:"folder_name" validate:"required,min=1,max=255"`
-	ParentFolderId string `json:"parent_folder_id"`
+	ID             string  `json:"id"`
+	ProjectID      string  `json:"project_id"`
+	FolderName     string  `json:"folder_name" validate:"required,min=1,max=255"`
+	ParentFolderId *string `json:"parent_folder_id"`
 
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
@@ -96,16 +96,16 @@ type CreateAccountDetails struct {
 }
 
 type CreateFileReq struct {
-	ProjectID      string `json:"project_id" validate:"required"`
-	FileName       string `json:"file_name" validate:"required,min=1,max=255"`
-	FileContent    string `json:"file_content" validate:"required"`
-	ParentFolderId string `json:"parent_folder_id"`
+	ProjectID      string  `json:"project_id" validate:"required"`
+	FileName       string  `json:"file_name" validate:"required,min=1,max=255"`
+	FileContent    string  `json:"file_content" validate:"required"`
+	ParentFolderId *string `json:"parent_folder_id"`
 }
 
 type CreateFolderReq struct {
-	ProjectID      string `json:"project_id" validate:"required"`
-	FolderName     string `json:"folder_name" validate:"required,min=1,max=255"`
-	ParentFolderId string `json:"parent_folder_id"`
+	ProjectID      string  `json:"project_id" validate:"required"`
+	FolderName     string  `json:"folder_name" validate:"required,min=1,max=255"`
+	ParentFolderId *string `json:"parent_folder_id"`
 }
 
 type FolderDetails struct {
