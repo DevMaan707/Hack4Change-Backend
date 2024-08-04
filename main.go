@@ -27,5 +27,5 @@ func main() {
 
 	router := gin.Default()
 	routes.InitializeRoutes(router, dbConn)
-	router.Run(":8080")
+	router.Run(":7563")
 }
