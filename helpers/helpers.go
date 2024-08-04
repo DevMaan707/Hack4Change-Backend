@@ -2,7 +2,7 @@ package helpers
 
 import (
 	"Hack4Change/models"
-	"os"
+	
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
@@ -10,7 +10,7 @@ import (
 )
 
 func GenerateJWT(userID string) (string, error) {
-	jwtSecret := []byte(os.Getenv("JWT_SECRET"))
+	jwtSecret := []byte(b19e0f8c6c9a4ed8b9e2d6a8f0f8b6c8)
 	expirationTime := time.Now().Add(7 * 24 * time.Hour)
 	claims := &models.Claims{
 		UserID: userID,
