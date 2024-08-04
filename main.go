@@ -12,13 +12,6 @@ import (
 )
 
 func main() {
-	// Load environment variables from .env file
-	err := godotenv.Load()
-	if err != nil {
-		slog.Error("Error loading .env file", slog.String("error", err.Error()))
-		log.Fatalf("Error loading .env file: %v", err)
-	}
-
 	dbConn, err := db.ConnectPostgreSQL()
 	if err != nil {
 		slog.Error("Error with postgresql", slog.String("error", err.Error()))
