@@ -17,7 +17,7 @@ COPY . .
 RUN go build -o original-server .
 
 # Expose port 8081 to the outside world
-EXPOSE 8081
+EXPOSE 7563
 
 # Command to run the executable
 CMD ["./original-server"]
