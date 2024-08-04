@@ -15,6 +15,7 @@ func main() {
 	dbConn, err := db.ConnectPostgreSQL()
 	if err != nil {
 		slog.Error("Error with postgresql", slog.String("error", err.Error()))
+		slog.Error("P")
 		log.Fatalf("Error with postgresql: %v", err)
 	}
 
