@@ -1,4 +1,4 @@
-# Dockerfile for Original Server
+# Dockerfile
 
 # Use an official Golang runtime as a parent image
 FROM golang:1.22.5
