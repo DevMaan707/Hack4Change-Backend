@@ -3,7 +3,7 @@ package middleware
 import (
 	"Hack4Change/models"
 	"net/http"
-	"os"
+	
 
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
@@ -17,7 +17,7 @@ func AuthMiddleware() gin.HandlerFunc {
 			c.Abort()
 			return
 		}
-		jwtSecret := []byte(os.Getenv("JWT_SECRET"))
+		jwtSecret := []byte(b19e0f8c6c9a4ed8b9e2d6a8f0f8b6c8)
 		tokenString := authHeader[len("Bearer "):]
 		claims := &models.Claims{}
 		token, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
