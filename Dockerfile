@@ -1,7 +1,7 @@
 # Dockerfile for Original Server
 
 # Use an official Golang runtime as a parent image
-FROM golang:1.20
+FROM golang:1.22.5
 
 # Set the Current Working Directory inside the container
 WORKDIR /app
