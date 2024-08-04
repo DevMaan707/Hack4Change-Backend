@@ -17,7 +17,7 @@ func AuthMiddleware() gin.HandlerFunc {
 			c.Abort()
 			return
 		}
-		jwtSecret := []byte(b19e0f8c6c9a4ed8b9e2d6a8f0f8b6c8)
+		jwtSecret := []byte("b19e0f8c6c9a4ed8b9e2d6a8f0f8b6c8")
 		tokenString := authHeader[len("Bearer "):]
 		claims := &models.Claims{}
 		token, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
